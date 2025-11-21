@@ -5,7 +5,7 @@ import '../dados/google_books_service.dart';
 import '../dados/membro_service.dart';
 
 // --- Imports de Telas ---
-import '../dados/status_membro_screen.dart';
+import 'status_membro_screen.dart';
 import 'livro_detalhes_page.dart';
 import 'membro_cadastro_page.dart';
 
@@ -54,7 +54,7 @@ class _LivrosApiScreenState extends State<LivrosApiScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('📚 Catálogo de Livros (Google Books API)'),
+        title: const Text('Gestao Biblioteca Livre'),
         backgroundColor: Colors.indigo.shade800,
         elevation: 0,
         actions: [

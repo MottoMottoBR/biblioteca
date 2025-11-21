@@ -14,9 +14,8 @@ class _LivroDetalhesScreenState extends State<LivroDetalhesScreen> {
   List<Map<String, dynamic>> _membros = [];
   String? _selectedMembroId;
   bool _isLoading = true;
-  String? _livroIdCatalogado;
+  String? _livroIdCatalogado; // Mantido para referência, mas a lógica usa 'livroId' localmente.
 
-  // NOVO: Controlador para o campo de texto do prazo (padrão 10 dias)
   final _diasEmprestimoController = TextEditingController(text: '10');
 
   @override
@@ -27,7 +26,7 @@ class _LivroDetalhesScreenState extends State<LivroDetalhesScreen> {
 
   @override
   void dispose() {
-    _diasEmprestimoController.dispose(); // Descartar o controlador
+    _diasEmprestimoController.dispose();
     super.dispose();
   }
 
@@ -37,6 +36,9 @@ class _LivroDetalhesScreenState extends State<LivroDetalhesScreen> {
       setState(() {
         _membros = membros;
         _isLoading = false;
+
+        // CORREÇÃO E ROBUSTEZ: Se o estado for recriado e o livro já tiver ID no BD,
+        // o _livroIdCatalogado não será setado aqui, o que é OK, pois será setado no _handleEmprestimo.
       });
     } catch (e) {
       _showSnackbar('Erro ao carregar membros: ${e.toString().replaceFirst('Exception: ', '')}', Colors.red);
@@ -61,20 +63,53 @@ class _LivroDetalhesScreenState extends State<LivroDetalhesScreen> {
 
     try {
       final livro = widget.livro;
+      final String capaUrl = (livro['capa_url'] ?? '') as String;
+      final String isbnLivro = (livro['isbn'] ?? 'N/A') as String;
 
-      // 1. CATALOGAR O LIVRO: Chamar o método com as correções de data e ISBN
-      _livroIdCatalogado ??= await _service.adicionarLivroAoCatalogo(
-        titulo: (livro['titulo'] ?? 'Título Desconhecido') as String,
-        isbn: (livro['isbn'] ?? 'N/A') as String,
-        autores: (livro['autores'] ?? 'Autor Desconhecido') as String,
-        dataPublicacao: (livro['data_publicacao'] ?? '2000') as String,
+      // --- 1. VERIFICAÇÃO/CATALOGAÇÃO (RESOLVE O ERRO 23505) ---
+      // Tenta encontrar o livro pelo ISBN no catálogo.
+      String? livroId = await _service.getLivroIdByIsbn(isbnLivro);
+
+      if (livroId == null) {
+        // Se o livro NÃO existe no catálogo, cataloga-o.
+        _livroIdCatalogado = await _service.adicionarLivroAoCatalogo(
+          titulo: (livro['titulo'] ?? 'Título Desconhecido') as String,
+          isbn: isbnLivro,
+          autores: (livro['autores'] ?? 'Autor Desconhecido') as String,
+          dataPublicacao: (livro['data_publicacao'] ?? '2000') as String,
+          capaUrl: capaUrl,
+        );
+        livroId = _livroIdCatalogado;
+      } else {
+        // Se o livro JÁ existe, usa o ID encontrado e evita o erro 23505.
+        _livroIdCatalogado = livroId;
+      }
+
+      // Garante que temos um ID válido antes de continuar
+      if (livroId == null) {
+        throw Exception('Falha ao obter o ID do livro.');
+      }
+
+
+      // --- 2. VERIFICAÇÃO DE EMPRÉSTIMO DUPLICADO ---
+      final bool jaEmprestado = await _service.isLivroEmprestadoPeloMembro(
+        livroId: livroId,
+        membroId: _selectedMembroId!,
       );
 
-      // 2. REGISTRAR O EMPRÉSTIMO: Usando o ID recém-catalogado e o prazo dinâmico
+      if (jaEmprestado) {
+        // Este é o aviso que você queria
+        _showSnackbar('🚨 Esta pessoa já tem um empréstimo ativo deste livro.', Colors.red);
+        setState(() => _isLoading = false);
+        return; // Interrompe a função se o empréstimo for duplicado
+      }
+
+
+      // --- 3. REGISTRAR O EMPRÉSTIMO ---
       await _service.registrarEmprestimo(
-        livroId: _livroIdCatalogado!,
+        livroId: livroId,
         membroId: _selectedMembroId!,
-        diasEmprestimo: diasEmprestimo, // VALOR DINÂMICO AQUI
+        diasEmprestimo: diasEmprestimo,
       );
 
       _showSnackbar(
@@ -84,6 +119,7 @@ class _LivroDetalhesScreenState extends State<LivroDetalhesScreen> {
 
       Navigator.pop(context);
     } on Exception catch (e) {
+      // O catch agora lida com erros de estoque ou outros erros de DB
       _showSnackbar(e.toString().replaceFirst('Exception: ', ''), Colors.red);
     } finally {
       setState(() => _isLoading = false);
@@ -185,6 +221,7 @@ class _LivroDetalhesScreenState extends State<LivroDetalhesScreen> {
                 onPressed: _isLoading ? null : _handleEmprestimo,
                 icon: const Icon(Icons.outbound, size: 20),
                 label: Text(
+                  // Atualiza o texto do botão com base no ID encontrado
                   _livroIdCatalogado == null ? 'Catalogar e Emprestar' : 'Emprestar Livro',
                 ),
                 style: ElevatedButton.styleFrom(
@@ -204,7 +241,6 @@ class _LivroDetalhesScreenState extends State<LivroDetalhesScreen> {
   }
 
   Widget _buildDetailRow(String title, String value) {
-    // ... (Método de detalhe da linha)
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Column(
@@ -221,7 +257,6 @@ class _LivroDetalhesScreenState extends State<LivroDetalhesScreen> {
   }
 
   Widget _buildMembroSelector() {
-    // ... (Método de seleção de membro)
     if (_membros.isEmpty) {
       return const Text(
         'Nenhum membro cadastrado. Cadastre um membro primeiro.',

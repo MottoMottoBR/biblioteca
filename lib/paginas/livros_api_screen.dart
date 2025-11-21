@@ -50,7 +50,7 @@ class _LivrosApiScreenState extends State<LivrosApiScreen> {
         titulo: livro['titulo'] as String,
         isbn: livro['isbn'] as String,
         autores: livro['autores'] as String,
-        dataPublicacao: livro['data_publicacao'] as String,
+        dataPublicacao: livro['data_publicacao'] as String, capaUrl: '',
       );
 
       // 2. Feedback visual e navegação para a tela de empréstimo
