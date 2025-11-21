@@ -24,7 +24,7 @@ class _LivrosApiScreenState extends State<LivrosApiScreen> {
   List<Map<String, dynamic>> _livrosEncontrados = [];
   bool _isLoading = false;
   final TextEditingController _searchController = TextEditingController(
-    text: 'Flutter',
+    text: 'Comida',
   );
 
   @override
@@ -49,18 +49,20 @@ class _LivrosApiScreenState extends State<LivrosApiScreen> {
 
   // --- FUNÇÃO _adicionarECatalogar REMOVIDA: A lógica de empréstimo foi movida para LivroDetalhesScreen ---
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gestao Biblioteca Livre'),
+        title: const Text(
+          'Gestao Biblioteca Livre',
+          style: TextStyle(color: Colors.white, fontSize: 25),
+        ),
         backgroundColor: Colors.indigo.shade800,
         elevation: 0,
         actions: [
           // Botão de acesso ao Cadastro de Membros
           IconButton(
-            icon: const Icon(Icons.group_add, color: Colors.white),
+            icon: const Icon(Icons.group_add, color: Colors.white, size: 55,),
             tooltip: 'Cadastrar Novo Membro',
             onPressed: () {
               Navigator.push(
@@ -74,7 +76,7 @@ class _LivrosApiScreenState extends State<LivrosApiScreen> {
 
           // Botão de acesso à Devolução/Status
           IconButton(
-            icon: const Icon(Icons.assignment_turned_in, color: Colors.white),
+            icon: const Icon(Icons.assignment_turned_in, color: Colors.green, size: 55,),
             tooltip: 'Gerenciar Empréstimos e Devoluções',
             onPressed: () {
               Navigator.push(
@@ -192,11 +194,11 @@ class _LivrosApiScreenState extends State<LivrosApiScreen> {
                   borderRadius: BorderRadius.circular(8),
                   child: (livro['capa_url'] as String).isNotEmpty
                       ? Image.network(
-                    livro['capa_url'],
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.book_outlined, size: 60),
-                  )
+                          livro['capa_url'],
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.book_outlined, size: 60),
+                        )
                       : const Icon(Icons.book, size: 60, color: Colors.grey),
                 ),
               ),

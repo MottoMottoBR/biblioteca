@@ -121,12 +121,12 @@ class _MembroCadastroScreenState extends State<MembroCadastroScreen> with Single
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gestão de Membros da Biblioteca'),
-        backgroundColor: Colors.indigo,
+        backgroundColor: Colors.black12,
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
             Tab(text: 'Cadastrar Novo Membro', icon: Icon(Icons.person_add)),
-            Tab(text: 'Consultar Status', icon: Icon(Icons.search)),
+            Tab(text: 'Consultar Status', icon: Icon(Icons.search), ),
           ],
         ),
       ),

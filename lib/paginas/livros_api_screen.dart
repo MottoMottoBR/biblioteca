@@ -19,7 +19,7 @@ class _LivrosApiScreenState extends State<LivrosApiScreen> {
   List<Map<String, dynamic>> _livrosEncontrados = [];
   bool _isLoading = false;
   final TextEditingController _searchController = TextEditingController(
-    text: 'Flutter',
+    text: 'Comida',
   );
 
   @override
