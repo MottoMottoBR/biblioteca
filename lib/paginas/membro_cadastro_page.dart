@@ -133,7 +133,7 @@ class _MembroCadastroScreenState extends State<MembroCadastroScreen>
           controller: _tabController,
           tabs: [
             Tab(text: 'Cadastrar Novo Membro', icon: Icon(Icons.person_add)),
-            Tab(text: 'Consultar Status', icon: Icon(Icons.search)),
+            Tab(text: 'Consultar Emprestimos', icon: Icon(Icons.search)),
           ],
         ),
       ),
