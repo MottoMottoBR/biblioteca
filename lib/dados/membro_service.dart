@@ -12,12 +12,11 @@ class MembroService {
   }
 
   // CREATE: Cadastra um novo membro
-// ATUALIZE ESTE MÉTODO em MembroService.dart
+  // ATUALIZE ESTE MÉTODO em MembroService.dart
   Future<void> registrarMembro({
     required String nome,
     String? email, // Alterado para opcional
     DateTime? dataNascimento, // Alterado para opcional
-
     // NOVOS PARÂMETROS
     String? telefone,
     String? endereco,
@@ -35,30 +34,27 @@ class MembroService {
     });
   }
 
-// E O MAIS IMPORTANTE:
-// Você deve rodar um script SQL ALTER TABLE na sua tabela 'membros' no Supabase
-// para adicionar as colunas 'telefone', 'endereco' e 'cpf'.
+  // E O MAIS IMPORTANTE:
+  // Você deve rodar um script SQL ALTER TABLE na sua tabela 'membros' no Supabase
+  // para adicionar as colunas 'telefone', 'endereco' e 'cpf'.
 
   // NOVO MÉTODO: Verifica se o livro já está emprestado pelo membro
-  Future<bool> isLivroEmprestadoPeloMembro({
-    required String livroId,
-    required String membroId,
-  }) async {
-    final response = await supabase
-        .from('emprestimos')
-        .select('emprestimo_id')
-        .eq('livro_id', livroId)
-        .eq('membro_id', membroId)
-        .filter(
-          'data_devolucao',
-          'is',
-          null,
-        ) // Filtra apenas empréstimos ativos
-        .limit(1);
-
-    // Se a lista de resultados não estiver vazia, significa que há um empréstimo ativo.
-    return response.isNotEmpty;
-  }
+  // Future<bool> isLivroEmprestadoPeloMembro({
+  //   required String livroId,
+  //   required String membroId,
+  // }) async {
+  //   final response = await supabase
+  //       .from('emprestimos')
+  //       .select('emprestimo_id')
+  //       .eq('livro_id', livroId)
+  //       .eq('membro_id', membroId)
+  //       // CORREÇÃO: Usando .is_() (o método postgrest para IS NULL)
+  //       .filter('data_devolucao', 'is', null)
+  //       .limit(1);
+  //
+  //   // Se a lista de resultados não estiver vazia, significa que há um empréstimo ativo.
+  //   return response.isNotEmpty;
+  // }
 
   // FUNÇÃO RPC: Registra um novo empréstimo
   Future<void> registrarEmprestimo({
@@ -66,18 +62,23 @@ class MembroService {
     required String membroId,
     required int diasEmprestimo,
   }) async {
-    // REVERIFICAÇÃO: Chamada explícita de verificação antes de tentar o RPC
-    // Isso garante que a lógica de empréstimo duplicado prevaleça sobre o erro de estoque
-    final jaEmprestado = await isLivroEmprestadoPeloMembro(
-      livroId: livroId,
-      membroId: membroId,
-    );
+    // 1. A VERIFICAÇÃO DE EMPRÉSTIMO DUPLICADO FOI REMOVIDA.
+    // Agora, a função RPC será chamada diretamente, permitindo empréstimos duplicados.
 
-    if (jaEmprestado) {
-      // Lança uma exceção específica que a UI pode capturar e tratar com o aviso
-      throw Exception(
-        'Empréstimo duplicado: Este membro já possui este livro emprestado.',
+    try {
+      await supabase.rpc(
+        'registrar_emprestimo_transacao',
+        params: {
+          'p_livro_id': livroId,
+          'p_membro_id': membroId,
+          'p_dias_emprestimo': diasEmprestimo,
+        },
       );
+    } on PostgrestException catch (e) {
+      // Removemos o tratamento de erro de 'Estoque indisponível'
+      throw Exception('Erro ao registrar empréstimo: ${e.message}');
+    } catch (e) {
+      throw Exception('Erro desconhecido: ${e.toString()}');
     }
 
     try {
@@ -217,8 +218,4 @@ class MembroService {
     }
     return null;
   }
-
-
-
-
 }

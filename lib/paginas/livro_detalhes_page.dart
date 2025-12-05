@@ -91,18 +91,10 @@ class _LivroDetalhesScreenState extends State<LivroDetalhesScreen> {
       }
 
 
-      // --- 2. VERIFICAÇÃO DE EMPRÉSTIMO DUPLICADO ---
-      final bool jaEmprestado = await _service.isLivroEmprestadoPeloMembro(
-        livroId: livroId,
-        membroId: _selectedMembroId!,
-      );
-
-      if (jaEmprestado) {
-        // Este é o aviso que você queria
-        _showSnackbar('🚨 Esta pessoa já tem um empréstimo ativo deste livro.', Colors.red);
-        setState(() => _isLoading = false);
-        return; // Interrompe a função se o empréstimo for duplicado
-      }
+      // --- 2. VERIFICAÇÃO DE EMPRÉSTIMO DUPLICADO (REMOVIDA) ---
+      // A lógica que chamava: `await _service.isLivroEmprestadoPeloMembro(...)`
+      // e o bloco `if (jaEmprestado)` foram removidos.
+      // Agora o fluxo segue diretamente para o registro do empréstimo.
 
 
       // --- 3. REGISTRAR O EMPRÉSTIMO ---
